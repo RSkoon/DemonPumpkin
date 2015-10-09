@@ -106,7 +106,7 @@ void setup() {
     _rightBrightness = 0;
     _mouthPosition = 90;
 
-    _NextEventTime = millis() + 10000;  // Initial Delay is only 20sec
+    _NextEventTime = millis() + 10000;  // Initial Delay is only 10sec
 
     // Initialize the RNG
     randomSeed(analogRead(0));
@@ -136,9 +136,11 @@ void loop() {
         Serial.println(millis());
 #endif
 
-        // Set to 0 until we fade in / out
+        // Set to large value until we fade in / out
         _NextEventTime = 0xFFFFFFFF;
 
+        // If we aren't awake and hit the event, it is time to wake up
+        // otherwise it will be time to fade out and sleep
         if (!_isAwake)
         {
             _eyeState = ES_FADE_IN;
@@ -163,7 +165,8 @@ void loop() {
     // Either waiting or event in progress
     else
     {
-        // Only update states if awake
+        // If we are currently awake, update both the eye and mouth based
+        // on the selected effect
         if (_isAwake)
         {
             updateEyeState();
@@ -187,8 +190,8 @@ void getRandomStates()
     // Set the temp interval for eye events
     _TempEventTime = millis() + 500;
 
-    // 90% of the time will move mouth
-    if (random(0, 10) <= 8)
+    // 80% of the time will move mouth
+    if (random(0, 10) <= 7)
     {
         _mouthState = MOUTH_OPENING;
     }
@@ -202,7 +205,7 @@ void getRandomStates()
 }
 
 // ****************************************************************************
-// updateEyeState
+// updateEyeState()
 //
 // Each loop update handle the update to the eyes
 // ****************************************************************************
@@ -228,6 +231,9 @@ void updateEyeState()
 }
 
 // ****************************************************************************
+// updateMouthState()
+//
+// Each loop update handle the update to the mouth
 // ****************************************************************************
 void updateMouthState()
 {
@@ -236,6 +242,7 @@ void updateMouthState()
         // 90 is Closed, 175 is Open so count up or down accordingly
         _mouthPosition += (_mouthState == MOUTH_OPENING ? MOUTH_STEP : -MOUTH_STEP);
 
+        // Once the open / close limit is hit, switch to other direction
         if (_mouthPosition >= 175)
         {
             _mouthPosition = 175;
